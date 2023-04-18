@@ -7,7 +7,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -37,24 +40,13 @@ import br.senai.sp.jandira.tripapp.components.TopShape
 import br.senai.sp.jandira.tripapp.model.User
 import br.senai.sp.jandira.tripapp.repository.UserRepository
 import br.senai.sp.jandira.tripapp.ui.theme.TripAppTheme
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import kotlin.contracts.contract
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val user = User(
-            userName = "Feijo",
-            email = "feijo@gmail.com",
-            password = "camilalinda123",
-            phone = "11111111111",
-            isOver18 = true
-        )
-
-        val userRep = UserRepository(this)
-
-        var id = userRep.save(user)
-
-        Toast.makeText(this, "$id", Toast.LENGTH_LONG).show()
 
         setContent {
             TripAppTheme {
@@ -74,6 +66,18 @@ fun SignUpScreen() {
     var photoUri by remember {
         mutableStateOf<Uri?>(null)
     }
+
+    var launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        photoUri = uri
+    }
+
+    var painter = rememberAsyncImagePainter(
+        ImageRequest.Builder(LocalContext.current)
+            .data(photoUri)
+            .build()
+    )
 
     var userNameState by remember {
         mutableStateOf("")
@@ -139,15 +143,23 @@ fun SignUpScreen() {
                         backgroundColor = Color(232, 232, 232, 255)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.user),
+                            painter =
+                            if (photoUri == null) painterResource(id = R.drawable.user)
+                            else painter,
                             contentDescription = "",
-
+                            contentScale = ContentScale.Crop
                             )
                     }
                     Image(
                         painter = painterResource(id = R.drawable.photo_24),
                         contentDescription = "",
-                        modifier = Modifier.align(Alignment.BottomEnd)
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .clickable {
+                                launcher.launch("image/*")
+                                var message = "nada"
+                                Log.i("ds2m", "URI: ${photoUri?.path ?: message}")
+                            }
                     )
                 }
             }
@@ -278,6 +290,7 @@ fun SignUpScreen() {
                                     emailState,
                                     passwordState,
                                     over18State,
+                                    photoUri!!.path ?: "",
                                     context
                                 )
                             },
@@ -342,6 +355,7 @@ fun saveUser(
     email: String,
     password: String,
     isOver18: Boolean,
+    profilePhotoUri: String,
     context: Context
 ) {
     val newUser = User(
@@ -350,7 +364,8 @@ fun saveUser(
         phone = phone,
         email = email,
         password = password,
-        isOver18 = isOver18
+        isOver18 = isOver18,
+        profilePhoto = profilePhotoUri
     )
 
     val userRepository = UserRepository(context)

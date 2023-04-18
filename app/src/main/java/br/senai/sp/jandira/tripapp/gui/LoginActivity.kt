@@ -1,6 +1,7 @@
 package br.senai.sp.jandira.tripapp.gui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -33,6 +34,10 @@ import br.senai.sp.jandira.tripapp.ui.theme.TripAppTheme
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //intent.extras
+        Log.i("ds2m", "ID: ")
+
         setContent {
             TripAppTheme {
                 Column() {
